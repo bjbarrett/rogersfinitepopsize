@@ -60,7 +60,7 @@ K <- 1000  #carying capacity
 w0 <- 1 #baseline fitness
 b <- 2  #benfit of adaptive behavior
 c <- 1  #cost of IL
-U <- 0.25 	#rate of enviro change
+U <- 0.2 	#rate of enviro change
 s <- 1    #prob of IL acquiring adaptive behavior
 timesteps <- 500
 
@@ -71,8 +71,8 @@ wS <- wI  <-  rep(0,timesteps )
 q[1] <- 1    #all social learners have adaptive behavior
 p[1] <- 0.5   #50.50 IL/SL mix
 u[1] <- 0     #stable env
-nI[1] <- 0.1*K
-nS[1] <- 0.1*K
+nI[1] <- 0.2*K
+nS[1] <- 0.2*K
 N[1] <- nI[1] + nS[1]
 
 for (t in 1:timesteps){
@@ -128,13 +128,13 @@ abline(h=mean(wI) , lty=2 , lw=1)
 
 #######Rogers infinite states with carryiing capacity########
 K <- 1000  #carying capacity
-w0 <- seq(from=0 , to=1 , by=0.1) #baseline fitness
+w0 <- seq(from=.1 , to=1 , by=0.1) #baseline fitness
 b <- 2  #benfit of adaptive behavior
 c <- 1  #cost of IL
-U <- 0.25 	#rate of enviro change
+U <- 0.2 	#rate of enviro change
 s <- 1    #prob of IL acquiring adaptive behavior
 timesteps <- 100
-nsims <- 12 #number or simulations for each condition
+nsims <- 1000 #number or simulations for each condition
 
 q <- p <- u <- nI <- nS <- N <-  array(0, dim = c(timesteps + 1,nsims,length(w0)))
 
@@ -147,8 +147,8 @@ u[1,,] <- 0     #stable env
 
 #rep(0,timesteps )
 for (k in 1:length(w0)){ #function of whatever parameter one is varying
-	nI[1,,k] <- 0.1*K
-	nS[1,,k] <- 0.1*K
+	nI[1,,k] <- 0.2*K
+	nS[1,,k] <- 0.2*K
 	N[1,,k] <- nI[1,,k] + nS[1,,k]
 ###initial states
 	for ( j in 1:nsims){
@@ -165,3 +165,106 @@ for (k in 1:length(w0)){ #function of whatever parameter one is varying
 
 	}
 }
+
+
+###what proportion of IL go extinct 
+nI[,j,k]
+min(nI[,j,1])
+min.nI <- min.N <- min.nS <- mint.nI <- mint.N <- mint.nS <- array(NA, dim = c(nsims,length(w0)))
+
+for(k in 1:length(w0)){
+	for (j in 1:nsims){
+		min.nI[j,k] <- min(nI[,j,k])
+		min.nS[j,k] <- min(nS[,j,k])
+		min.N[j,k] <- min(N[,j,k])
+		#mint.nI[j,k] <- min(nI[,j,k])
+		#mint.nS[j,k] <- min(nS[,j,k])
+		mint.N[j,k] <- ifelse( is.finite(min(which( N[,j,k] <1))) , min(which( N[,j,k] <1)) , mint.N[j,k] ) #gives a vector of minimum population sizes and timesteps where extinction occurs, NAs include persistance
+		mint.nS[j,k] <- ifelse( is.finite(min(which( nS[,j,k] <1))) , min(which( nS[,j,k] <1)) , mint.nS[j,k] ) 
+		mint.nI[j,k] <- ifelse( is.finite(min(which( nI[,j,k] <1))) , min(which( nI[,j,k] <1)) , mint.nI[j,k] ) 
+
+	}
+}
+
+
+
+
+#####plot of minimum population size
+par(mfrow = c(length(w0), 1))
+par(cex = 0.3)
+par(oma = c(4,2,3,1))
+par(mar = c(2,3,0,0))
+
+for(k in 1:length(w0)){
+	dens(min.N[,k], xlim=c(0,max(min.N)) , show.HPDI=0.8)
+	abline(v=median(min.N[,k]))
+	points(min.N[,k],rep(0,1000) , pch="|", col=col.alpha("black", 0.25))
+	title(paste("w0=",w0[k], sep=" ") , outer=FALSE , cex.main=2 , line=-1.5)
+
+	#dens(min.nS[,k], xlim=c(0,max(N)) , col="orange" , add=TRUE)
+	#dens(min.nI[,k], xlim=c(0,max(N))  , col="blue" , add=TRUE)
+	#abline(v=median(min.nI[,k]) , col="blue")
+}
+
+mtext("Minimum Population Size", 1 , line=3.5)
+title(paste("u=",U,";b=",b,";c=",c,";s=",s,";K=",K, sep=" ") , outer=TRUE , cex.main=2 , line=1)
+
+####minimum number of social learners
+par(mfrow = c(length(w0), 1))
+par(cex = 0.3)
+par(oma = c(4,2,3,1))
+par(mar = c(2,3,0,0))
+
+for(k in 1:length(w0)){
+	dens(min.nS[,k], xlim=c(0,max(min.nS)) , col="orange", show.HPDI=0.8 )
+	abline(v=median(min.nS[,k]) , col="orange")
+	points(min.nS[,k],rep(0,1000) , pch="|", col=col.alpha("black", 0.25))
+	title(paste("w0=",w0[k], sep=" ") , outer=FALSE , cex.main=2 , line=-1.5)
+
+}
+
+mtext("Minimum Number of Social Learners", 1 , line=3.5)
+title(paste("u=",U,";b=",b,";c=",c,";s=",s,";K=",K, sep=" ") , outer=TRUE , cex.main=2 , line=1)
+
+###min num individual learners
+par(mfrow = c(length(w0), 1))
+par(cex = 0.3)
+par(oma = c(4,2,3,1))
+par(mar = c(2,3,0,0))
+
+for(k in 1:length(w0)){
+	dens(min.nI[,k], xlim=c(0,max(min.nI)) , col="blue", show.HPDI=0.8 )
+	abline(v=median(min.nI[,k]) , col="blue")
+	points(min.nI[,k],rep(0,1000) , pch="|", col=col.alpha("black", 0.25))
+
+}
+
+mtext("Minimum Number of Individual Learners", 1 , line=3.5)
+title(paste("u=",U,";b=",b,";c=",c,";s=",s,";K=",K, sep=" ") , outer=TRUE , cex.main=2 , line=1)
+
+
+##What proportion of SL go extinct
+length(N)
+
+length(which( N[2:101,j,k] > 1))  /nsims)
+
+length(mint.N[,1])
+
+length(which( mint.N[,5] != 'NA'))
+
+dens(mint.N[,2] , rm.na=TRUE)
+
+N[which( N[,1,1] <500),1,1]
+
+min(which( N[,j,k] <1))  #gives which row in each simulation has population extinction
+
+dens(mint.N[,2] , rm.na=TRUE)
+
+length(min.nI[min.nI<1])/length(min.nI)
+length(min.nS[min.nS<1])/length(min.nS)
+length(min.N[min.N<1])/length(min.N)
+
+plot()
+###When does population collapse
+###What are the distrbutions od time to extripation
+
