@@ -174,12 +174,12 @@ min.nI <- min.N <- min.nS <- mint.nI <- mint.N <- mint.nS <- array(NA, dim = c(n
 
 for(k in 1:length(w0)){
 	for (j in 1:nsims){
-		min.nI[j,k] <- min(nI[,j,k])
-		min.nS[j,k] <- min(nS[,j,k])
+		min.nI[j,k] <- min(nI[,j,k]) #min number individual learners in each simulation across each condition
+		min.nS[j,k] <- min(nS[,j,k]) #min number social learners in each simulation across each condition
 		min.N[j,k] <- min(N[,j,k])
 		#mint.nI[j,k] <- min(nI[,j,k])
 		#mint.nS[j,k] <- min(nS[,j,k])
-		mint.N[j,k] <- ifelse( is.finite(min(which( N[,j,k] <1))) , min(which( N[,j,k] <1)) , mint.N[j,k] ) #gives a vector of minimum population sizes and timesteps where extinction occurs, NAs include persistance
+		mint.N[j,k] <- ifelse( is.finite(min(which( N[,j,k] <1))) , min(which( N[,j,k] <1)) , mint.N[j,k] ) #gives a vector of timesteps where extinction occurs, NAs include persistance
 		mint.nS[j,k] <- ifelse( is.finite(min(which( nS[,j,k] <1))) , min(which( nS[,j,k] <1)) , mint.nS[j,k] ) 
 		mint.nI[j,k] <- ifelse( is.finite(min(which( nI[,j,k] <1))) , min(which( nI[,j,k] <1)) , mint.nI[j,k] ) 
 
@@ -243,10 +243,65 @@ mtext("Minimum Number of Individual Learners", 1 , line=3.5)
 title(paste("u=",U,";b=",b,";c=",c,";s=",s,";K=",K, sep=" ") , outer=TRUE , cex.main=2 , line=1)
 
 
-##What proportion of SL go extinct
+##What proportion of individuals go extinct
+prop.extinct.N <- prop.extinct.nI <- prop.extinct.nS <- med.t.N <- med.t.nS <- med.t.nI <- rep(timesteps,length(w0))
+
+for (k in 1:length(w0) ){
+	prop.extinct.N[k] <- (nsims-sum(is.na(mint.N[,k])))/nsims
+	prop.extinct.nI[k] <- (nsims-sum(is.na(mint.nI[,k])))/nsims
+	prop.extinct.nS[k] <- (nsims-sum(is.na(mint.nS[,k])))/nsims
+
+	med.t.N[k] <- mean(mint.N[,k] , na.rm=TRUE)
+	med.t.nI[k] <- mean(mint.nI[,k] , na.rm=TRUE)
+	med.t.nS[k] <- mean(mint.nS[,k] , na.rm=TRUE)
+}
+
+#plot of prob of extripation for all 
+plot(w0 , prop.extinct.N , pch=19 , ylim=c(0,1) , ylab="probability of extripation" , xlab="baseline fitness (w0)")
+lines(w0 , prop.extinct.N)
+points(w0 , prop.extinct.nI ,  pch=18 , col="blue")
+points(w0 , prop.extinct.nS ,  pch=17 , col="orange")
+lines(w0 , prop.extinct.nI , col="blue")
+lines(w0 , prop.extinct.nS , col="orange")
+#add legend
+legend("topright", c("all individuals","social learners","individual learners"), col=c("black","orange","blue"), horiz=FALSE, pch=c(19,17,18) , lty=1)
+
+
+plot(w0 , med.t.N , pch=19 , ylim=c(0,timesteps) , ylab="mean time to extripation | extripation" , xlab="baseline fitness (w0)")
+lines(w0 , med.t.N )
+points(w0 , med.t.nI ,  pch=18 , col="blue")
+points(w0 , med.t.nS ,  pch=17 , col="orange")
+lines(w0 , med.t.nI  , col="blue")
+lines(w0 , med.t.nS  , col="orange")
+#add legend
+legend("topright", c("all individuals","social learners","individual learners"), col=c("black","orange","blue"), horiz=FALSE, pch=c(19,17,18) , lty=1)
+
+
+
+par(mfrow = c(length(w0), 1))
+par(cex = 0.3)
+par(oma = c(4,2,3,1))
+par(mar = c(2,3,0,0))
+
+for(k in 1:length(w0)){
+	dens(mint.N[,k] , rm.na=TRUE , ylim=c(0,0.08) , xlim=c(0,100))
+	dens(mint.nI[,k] , rm.na=TRUE , col="blue" , add=TRUE )
+	dens(mint.nS[,k] , rm.na=TRUE , col="orange" , add=TRUE )
+	abline(v=median(mint.N[,k] , na.rm=TRUE)  , col="black" )
+	abline(v=median(mint.nI[,k] , na.rm=TRUE)  , col="blue" )
+	abline(v=median(mint.nS[,k] , na.rm=TRUE)  , col="orange" )
+}
+
+mtext("time until extripation", 1 , line=3.5)
+title(paste("u=",U,";b=",b,";c=",c,";s=",s,";K=",K, sep=" ") , outer=TRUE , cex.main=2 , line=1)
+
+
 length(N)
 
-length(which( N[2:101,j,k] > 1))  /nsims)
+(length(which( N[2:101,j,k] > 1) )  /nsims)
+
+(length(which( N[2:101,j,k] > 1) )  /nsims)
+
 
 length(mint.N[,1])
 
